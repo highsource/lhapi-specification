@@ -29,18 +29,18 @@ basePath: /v1
 consumes:
   - application/x-www-form-urlencoded
   - application/json
-# securityDefinitions:
-#   api_key:
-#     type: apiKey
-#     name: api_key
-#     in: header
-#     name: Authorization
-# Swagger does not support client_credentials oauth2 flow
+securityDefinitions:
+  apiKey:
+    type: apiKey
+    in: header
+    name: Authorization
 #  oauth2:
 #    type: oauth2
-#    flow: client_credentials
+#    flow: accessCode
 #    authorizationUrl: https://api.lufthansa.com/v1/oauth/token
-# Describe your paths here
+#    scopes:
+#      write:pets: modify pets in your account
+#      read:pets: read your pets
 paths:
 
   /oauth/token:
@@ -77,6 +77,9 @@ paths:
   /operations/flightstatus/departures/{airportCode}/{from}/{until}:
     get:
       description: The status of all departures from a given airport within a specific time range
+      security:
+        -
+          apiKey: []
       consumes:
         - application/json
       produces:
@@ -86,7 +89,7 @@ paths:
           name: Authorization
           in: header
           description: Authorization token in form "Bearer token"
-          required: true
+          required: false
           type: string
         -
           name: airportCode
@@ -110,11 +113,14 @@ paths:
         200:
           description: The status of all departures from a given airport within a specific time range
           schema: 
-            $ref: '#/definitions/FlightStatusResponse'
+            $ref: '#/definitions/FlightsStatusResponse'
 
   /operations/flightstatus/arrivals/{airportCode}/{from}/{until}:
     get:
       description: The status of all arrivals at a given airport within a specific time range
+      security:
+        -
+          apiKey: []
       consumes:
         - application/json
       produces:
@@ -124,7 +130,7 @@ paths:
           name: Authorization
           in: header
           description: Authorization token in form "Bearer token"
-          required: true
+          required: false
           type: string
         -
           name: airportCode
@@ -148,11 +154,14 @@ paths:
         200:
           description: The status of all arrivals at a given airport within a specific time range
           schema: 
-            $ref: '#/definitions/FlightStatusResponse'
+            $ref: '#/definitions/FlightsStatusResponse'
   
   /operations/flightstatus/{flightNumber}/{date}:
     get:
       description: Get the status of a particular flight (on time, landed, etc.)
+      security:
+        -
+          apiKey: []
       consumes:
         - application/json
       produces:
@@ -162,7 +171,7 @@ paths:
           name: Authorization
           in: header
           description: Authorization token in form "Bearer token"
-          required: true
+          required: false
           type: string
         -
           name: flightNumber
@@ -202,6 +211,13 @@ definitions:
         type: integer
         format: int32
         description: The number of seconds until this token expires
+  FlightsStatusResponse:
+    type: object
+    required:
+      - FlightStatusResource
+    properties:
+      FlightStatusResource:
+        $ref: '#/definitions/FlightsStatusResource'
   FlightStatusResponse:
     type: object
     required:
@@ -209,13 +225,20 @@ definitions:
     properties:
       FlightStatusResource:
         $ref: '#/definitions/FlightStatusResource'
-  FlightStatusResource:
+  FlightsStatusResource:
     type: object
     required:
       - Flights
     properties:
       Flights:
         $ref: '#/definitions/Flights'
+  FlightStatusResource:
+    type: object
+    required:
+      - Flights
+    properties:
+      Flights:
+        $ref: '#/definitions/SingularFlights'
   Flights:
     type: object
     required:
@@ -225,6 +248,13 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Flight'
+  SingularFlights:
+    type: object
+    required:
+      - Flight
+    properties:
+      Flight:
+        $ref: '#/definitions/Flight'
   Flight:
     type: object
     required:
@@ -259,19 +289,19 @@ definitions:
       - Terminal
     properties:
       AirportCode:
-        $ref: '#/definitions/AirportCode'
+        type: string
       ScheduledTimeLocal:
-        $ref: '#/definitions/DateTime'
+        $ref: '#/definitions/DateTimeObject'
       ScheduledTimeUTC:
-        $ref: '#/definitions/DateTime'
+        $ref: '#/definitions/DateTimeObject'
       ActualTimeLocal:
-        $ref: '#/definitions/DateTime'
+        $ref: '#/definitions/DateTimeObject'
       ActualTimeUTC:
-        $ref: '#/definitions/DateTime'
+        $ref: '#/definitions/DateTimeObject'
       EstimatedTimeLocal:
-        $ref: '#/definitions/DateTime'
+        $ref: '#/definitions/DateTimeObject'
       EstimatedTimeUTC:
-        $ref: '#/definitions/DateTime'
+        $ref: '#/definitions/DateTimeObject'
       TimeStatus:
         $ref: '#/definitions/TimeStatus'
       Terminal:
@@ -283,16 +313,18 @@ definitions:
       - FlightNumber
     properties:
       AirlineID:
-        $ref: '#/definitions/AirlineID'
+        type: string
       FlightNumber:
-        $ref: '#/definitions/FlightNumber'
+        type:
+          integer
   Equipment:
     type: object
     required:
       - AircraftCode
     properties:
       AircraftCode:
-        $ref: '#/definitions/AircraftCode'
+        type:
+          string
   FlightStatus:
     type: object
     required:
@@ -300,18 +332,24 @@ definitions:
       - Definition
     properties:
       Code:
-        $ref: '#/definitions/FlightStatusCode'
+        type: string
+        enum:
+          - CD # Flight Cancelled
+          - DP # Flight Departed
+          - LD # Flight Landed
+          - RT # Flight Rerouted
+          - NA # No status
       Definition:
         type: string
-  AirportCode:
-    type: string
-  DateTime:
+  DateTimeObject:
     type: object
     required:
       - DateTime
     properties:
       DateTime:
-        type: string
+        $ref: '#/definitions/DateTime'
+  DateTime:
+    type: string
   TimeStatus:
     type: object
     required:
@@ -319,7 +357,13 @@ definitions:
       - Definition
     properties:
       Code:
-        $ref: '#/definitions/TimeStatusCode'
+        type: string
+        enum:
+          - FE # Flight Early
+          - NI # Flight Early
+          - OT # Flight On Time
+          - DL # Flight Delayed
+          - 'NO' # No status
       Definition:
         type: string
   Terminal:
@@ -332,27 +376,3 @@ definitions:
         type: string
       Gate:
         type: string
-  FlightNumber:
-    type:
-      integer
-  AircraftCode:
-    type:
-      integer
-  FlightStatusCode:
-    type: string
-    enum:
-      - CD # Flight Cancelled
-      - DP # Flight Departed
-      - LD # Flight Landed
-      - RT # Flight Rerouted
-      - NA # No status
-  TimeStatusCode:
-    type: string
-    enum:
-      - FE # Flight Early
-      - NI # Flight Early
-      - OT # Flight On Time
-      - DL # Flight Delayed
-      - NO # No status
-  AirlineID:
-    type: string
