@@ -42,6 +42,7 @@ consumes:
 #    authorizationUrl: https://api.lufthansa.com/v1/oauth/token
 # Describe your paths here
 paths:
+
   /oauth/token:
     post:
       description: Access to our services is controlled via tokens (Oauth 2.0). To get a token you must call our token end-point and supply your client key and client secret. Tokens remain valid for a limited time.
@@ -69,9 +70,46 @@ paths:
           enum: ["client_credentials"]
       responses:
         200:
-          description: Returns the temporary access token
           schema:
             $ref: '#/definitions/access_token'
+
+  /operations/flightstatus/departures/{airportCode}/{from}/{until}:
+    get:
+      description: The status of all departures from a given airport within a specific time range
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        -
+          name: Authorization
+          in: header
+          description: Authorization token in form "Bearer token"
+          required: true
+          type: string
+        -
+          name: airportCode
+          description: The IATA code of the departure airport (e.g. HAM)
+          in: path
+          required: true
+          type: string
+        -
+          name: from
+          description: Start of time range in local time of departure airport (e.g. 2014-11-18T10:30)
+          in: path
+          required: true
+          type: string
+        -
+          name: until
+          description: End of time range in local time of departure airport (e.g. 2014-11-18T12:30)
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          schema: 
+            $ref: '#/definitions/FlightStatusResponse'
+
   /operations/flightstatus/arrivals/{airportCode}/{from}/{until}:
     get:
       description: The status of all arrivals at a given airport within a specific time range
@@ -88,7 +126,7 @@ paths:
           type: string
         -
           name: airportCode
-          description: The IATA code of the arrival airport (e.g. ZRH).
+          description: The IATA code of the arrival airport (e.g. ZRH)
           in: path
           required: true
           type: string
@@ -106,9 +144,39 @@ paths:
           type: string
       responses:
         200:
-          description: The status of all arrivals at a given airport within a specific time range
           schema: 
             $ref: '#/definitions/FlightStatusResponse'
+
+  /operations/flightstatus/{flightNumber}/{date}
+      description: Get the status of a particular flight (on time, landed, etc.).
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        -
+          name: Authorization
+          in: header
+          description: Authorization token in form "Bearer token"
+          required: true
+          type: string
+        -
+          name: flightNumber
+          description: The flight number including carrier code and any suffix, e.g. LH400
+          in: path
+          required: true
+          type: string
+        -
+          name: date
+          description: The departure date (YYYY-MM-DD) in the local time of the departure airport.
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          schema: 
+            $ref: '#/definitions/FlightStatusResponse'
+
 definitions:
   access_token:
     type: object
@@ -195,6 +263,10 @@ definitions:
         $ref: '#/definitions/DateTime'
       ActualTimeUTC:
         $ref: '#/definitions/DateTime'
+      EstimatedTimeLocal:
+        $ref: '#/definitions/DateTime'
+      EstimatedTimeUTC:
+        $ref: '#/definitions/DateTime'
       TimeStatus:
         $ref: '#/definitions/TimeStatus'
       Terminal:
@@ -263,7 +335,19 @@ definitions:
       integer
   FlightStatusCode:
     type: string
+    enum:
+      - CD # Flight Cancelled
+      - DP # Flight Departed
+      - LD # Flight Landed
+      - RT # Flight Rerouted
+      - NA # No status
   TimeStatusCode:
     type: string
+    enum:
+      - FE # Flight Early
+      - NI # Flight Early
+      - OT # Flight On Time
+      - DL # Flight Delayed
+      - NO # No status
   AirlineID:
     type: string
