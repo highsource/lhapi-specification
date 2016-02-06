@@ -1,0 +1,269 @@
+#    OpenAPI Specification for LH Public API
+#    Copyright (C) 2016  Alexey Valikov
+
+#    This program is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+
+#    You should have received a copy of the GNU General Public License
+#    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+swagger: '2.0'
+info:
+  version: "1"
+  title: LH Public API
+  description: Lufthansa API
+  termsOfService: https://developer.lufthansa.com/General_Terms_and_Conditions
+  contact:
+    url: https://developer.lufthansa.com/contact
+schemes:
+  - https
+host: api.lufthansa.com
+basePath: /v1
+consumes:
+  - application/x-www-form-urlencoded
+  - application/json
+# securityDefinitions:
+#   api_key:
+#     type: apiKey
+#     name: api_key
+#     in: header
+#     name: Authorization
+# Swagger does not support client_credentials oauth2 flow
+#  oauth2:
+#    type: oauth2
+#    flow: client_credentials
+#    authorizationUrl: https://api.lufthansa.com/v1/oauth/token
+# Describe your paths here
+paths:
+  /oauth/token:
+    post:
+      description: Access to our services is controlled via tokens (Oauth 2.0). To get a token you must call our token end-point and supply your client key and client secret. Tokens remain valid for a limited time.
+      consumes:
+        - application/x-www-form-urlencoded
+      parameters:
+        -
+          name: client_id
+          description: Your client application key
+          in: formData
+          required: true
+          type: string
+        -
+          name: client_secret
+          description: Your client secret
+          in: formData
+          required: true
+          type: string
+        -
+          name: grant_type
+          description: Grant type, must be "client_credentials"
+          in: formData
+          required: true
+          type: string
+          enum: ["client_credentials"]
+      responses:
+        200:
+          description: Returns the temporary access token
+          schema:
+            $ref: '#/definitions/access_token'
+  /operations/flightstatus/arrivals/{airportCode}/{from}/{until}:
+    get:
+      description: The status of all arrivals at a given airport within a specific time range
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        -
+          name: Authorization
+          in: header
+          description: Authorization token in form "Bearer token"
+          required: true
+          type: string
+        -
+          name: airportCode
+          description: The IATA code of the arrival airport (e.g. ZRH).
+          in: path
+          required: true
+          type: string
+        -
+          name: from
+          description: Start of time range in local time of arrival airport (e.g. 2014-11-18T10:30)
+          in: path
+          required: true
+          type: string
+        -
+          name: until
+          description: End of time range in local time of arrival airport (e.g. 2014-11-18T12:30)
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: The status of all arrivals at a given airport within a specific time range
+          schema: 
+            $ref: '#/definitions/FlightStatusResponse'
+definitions:
+  access_token:
+    type: object
+    required:
+      - access_token
+      - token_type
+      - expires_in
+    properties:
+      access_token:
+        type: string
+        description: Your new access token
+      token_type:
+        type: string
+        description: Type of the token. We only use bearer tokens. Note that we respond with token_type "bearer" (lower case b) yet when you send us a token it must be named "Bearer" (upper case B).
+        enum:
+          - bearer
+      expires_in:
+        type: integer
+        format: int32
+        description: The number of seconds until this token expires
+  FlightStatusResponse:
+    type: object
+    required:
+      - FlightStatusResource
+    properties:
+      FlightStatusResource:
+        $ref: '#/definitions/FlightStatusResource'
+  FlightStatusResource:
+    type: object
+    required:
+      - Flights
+    properties:
+      Flights:
+        $ref: '#/definitions/Flights'
+  Flights:
+    type: object
+    required:
+      - Flight
+    properties:
+      Flight:
+        type: array
+        items:
+          $ref: '#/definitions/Flight'
+  Flight:
+    type: object
+    required:
+      - Departure
+      - Arrival
+      - MarketingCarrier
+      - OperatingCarrier
+      - Equipment
+      - FlightStatus
+    properties:
+      Departure:
+        $ref: '#/definitions/DepartureOrArrival'
+      Arrival:
+        $ref: '#/definitions/DepartureOrArrival'
+      MarketingCarrier:
+        $ref: '#/definitions/Carrier'
+      OperatingCarrier:
+        $ref: '#/definitions/Carrier'
+      Equipment:
+        $ref: '#/definitions/Equipment'
+      FlightStatus:
+        $ref: '#/definitions/FlightStatus'
+  DepartureOrArrival:
+    type: object
+    required:
+      - AirportCode
+      - ScheduledTimeLocal
+      - ScheduledTimeUTC
+      - ActualTimeLocal
+      - ActualTimeUTC
+      - TimeStatus
+      - Terminal
+    properties:
+      AirportCode:
+        $ref: '#/definitions/AirportCode'
+      ScheduledTimeLocal:
+        $ref: '#/definitions/DateTime'
+      ScheduledTimeUTC:
+        $ref: '#/definitions/DateTime'
+      ActualTimeLocal:
+        $ref: '#/definitions/DateTime'
+      ActualTimeUTC:
+        $ref: '#/definitions/DateTime'
+      TimeStatus:
+        $ref: '#/definitions/TimeStatus'
+      Terminal:
+        $ref: '#/definitions/Terminal'
+  Carrier:
+    type: object
+    required:
+      - AirlineID
+      - FlightNumber
+    properties:
+      AirlineID:
+        $ref: '#/definitions/AirlineID'
+      FlightNumber:
+        $ref: '#/definitions/FlightNumber'
+  Equipment:
+    type: object
+    required:
+      - AircraftCode
+    properties:
+      AircraftCode:
+        $ref: '#/definitions/AircraftCode'
+  FlightStatus:
+    type: object
+    required:
+      - Code
+      - Definition
+    properties:
+      Code:
+        $ref: '#/definitions/FlightStatusCode'
+      Definition:
+        type: string
+  AirportCode:
+    type: string
+  DateTime:
+    type: object
+    required:
+      - DateTime
+    properties:
+      DateTime:
+        type: string
+  TimeStatus:
+    type: object
+    required:
+      - Code
+      - Definition
+    properties:
+      Code:
+        $ref: '#/definitions/TimeStatusCode'
+      Definition:
+        type: string
+  Terminal:
+    type: object
+    required:
+      - Name
+      - Gate
+    properties:
+      Name:
+        type: string
+      Gate:
+        type: string
+  FlightNumber:
+    type:
+      integer
+  AircraftCode:
+    type:
+      integer
+  FlightStatusCode:
+    type: string
+  TimeStatusCode:
+    type: string
+  AirlineID:
+    type: string
