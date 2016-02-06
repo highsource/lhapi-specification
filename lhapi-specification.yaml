@@ -70,6 +70,7 @@ paths:
           enum: ["client_credentials"]
       responses:
         200:
+          description: Temporary access token
           schema:
             $ref: '#/definitions/access_token'
 
@@ -107,6 +108,7 @@ paths:
           type: string
       responses:
         200:
+          description: The status of all departures from a given airport within a specific time range
           schema: 
             $ref: '#/definitions/FlightStatusResponse'
 
@@ -144,11 +146,13 @@ paths:
           type: string
       responses:
         200:
+          description: The status of all arrivals at a given airport within a specific time range
           schema: 
             $ref: '#/definitions/FlightStatusResponse'
-
-  /operations/flightstatus/{flightNumber}/{date}
-      description: Get the status of a particular flight (on time, landed, etc.).
+  
+  /operations/flightstatus/{flightNumber}/{date}:
+    get:
+      description: Get the status of a particular flight (on time, landed, etc.)
       consumes:
         - application/json
       produces:
@@ -174,6 +178,7 @@ paths:
           type: string
       responses:
         200:
+          description: The status of a particular flight (on time, landed, etc.)
           schema: 
             $ref: '#/definitions/FlightStatusResponse'
 
