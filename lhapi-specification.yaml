@@ -281,6 +281,45 @@ paths:
           schema: 
             $ref: '#/definitions/AirlinesResponse'      
 
+  /references/aircraft/{aircraftCode}:
+    get:
+      description: Reference data about aircraft. With no parameters, all aircraft types are returned.
+      security:
+        -
+          apiKey: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        -
+          name: aircraftCode
+          description: Optional 3-character IATA aircraft code.
+          in: path
+          required: true
+          type: string
+      responses:
+        200:
+          description: Reference data about aircraft.
+          schema: 
+            $ref: '#/definitions/AircraftSummariesResponse'      
+
+  /references/aircraft/:
+    get:
+      description: Reference data about aircraft. With no parameters, all aircraft types are returned.
+      security:
+        -
+          apiKey: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Reference data about aircraft.
+          schema: 
+            $ref: '#/definitions/AircraftSummariesResponse'      
+
   /operations/flightstatus/departures/{airportCode}/{from}/{until}:
     get:
       description: The status of all departures from a given airport within a specific time range
@@ -560,14 +599,12 @@ definitions:
       - AirlineID_ICAO
       - Names
     properties:
-      AirportCode:
+      OtherIDs:
+        $ref: '#/definitions/OtherIDs'
+      AirlineID:
         type: string
-      CityCode:
+      AirlineID_ICAO:
         type: string
-      CountryCode:
-        type: string
-      Position:
-        $ref: '#/definitions/Position'
       Names:
         $ref: '#/definitions/Names'
   OtherIDs:
@@ -608,7 +645,7 @@ definitions:
     required:
       - AircraftSummary
     properties:
-      Aircraft:
+      AircraftSummary:
         type: array
         items:
           $ref: '#/definitions/AircraftSummary'
