@@ -74,6 +74,58 @@ paths:
           schema:
             $ref: '#/definitions/access_token'
 
+  /references/countries/:
+    get:
+      description: Retreive a list of all countries or details of one specific country. If a country is specified, there is an option to limit the response to a given language.
+      security:
+        -
+          apiKey: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        -
+          name: lang
+          description: Optional query parameter. 2 letter ISO 3166-1 language code.
+          in: query
+          required: true
+          type: string
+      responses:
+        200:
+          description: The status of all departures from a given airport within a specific time range
+          schema: 
+            $ref: '#/definitions/CountriesResponse'      
+
+  /references/countries/{countryCode}:
+    get:
+      description: Retreive a list of all countries or details of one specific country. If a country is specified, there is an option to limit the response to a given language.
+      security:
+        -
+          apiKey: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        -
+          name: countryCode
+          description: Optional 2 letter ISO 3166-1 country code.
+          in: path
+          required: true
+          type: string
+        -
+          name: lang
+          description: Optional query parameter. 2 letter ISO 3166-1 language code.
+          in: query
+          required: true
+          type: string
+      responses:
+        200:
+          description: The status of all departures from a given airport within a specific time range
+          schema: 
+            $ref: '#/definitions/CountriesResponse'      
+
   /operations/flightstatus/departures/{airportCode}/{from}/{until}:
     get:
       description: The status of all departures from a given airport within a specific time range
@@ -193,6 +245,59 @@ definitions:
         type: integer
         format: int32
         description: The number of seconds until this token expires
+  CountriesResponse:
+    type: object
+    required:
+      - CountryResource
+    properties:
+      CountryResource:
+        $ref: '#/definitions/CountryResource'
+  CountryResource:
+    type: object
+    required:
+      - Countries
+    properties:
+      Countries:
+        $ref: '#/definitions/Countries'
+  Countries:
+    type: object
+    required:
+      - Country
+    properties:
+      Country:
+        type: array
+        items:
+          $ref: '#/definitions/Country'
+  Country:
+    type: object
+    required:
+      - CountryCode
+      - ZoneCode
+      - Names
+    properties:
+      CountryCode:
+        type: string
+      ZoneCode:
+        type: string
+      Names:
+          $ref: '#/definitions/Names'
+  Names:
+    type: object
+    required:
+      - Name
+    properties:
+      Name:
+          $ref: '#/definitions/Name'
+  Name:
+    type: object
+    required:
+      - '@LanguageCode'
+      - '$'
+    properties:
+      '@LanguageCode':
+          type: string
+      '$':
+          type: string
   FlightsStatusResponse:
     type: object
     required:
