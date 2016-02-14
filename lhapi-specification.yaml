@@ -199,13 +199,50 @@ paths:
           name: LHoperated
           description: Optional query parameter. Restrict the results to locations with flights operated by LH (true, false).
           in: query
-          required: true
+          required: false
           type: string
       responses:
         200:
           description: Reference data about airports.
           schema: 
             $ref: '#/definitions/AirportsResponse'      
+
+  /references/airports/nearest/{latitude},{longitude}:
+    get:
+      description: Find the 5 closest airports to the given latitude and longitude, irrespective of the radius of the reference point.
+      security:
+        -
+          apiKey: []
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        -
+          name: latitude
+          description: Latitude in decimal format to at most 3 decimal places
+          in: path
+          required: true
+          type: number
+          format: double
+        -
+          name: longitude
+          description: Longitude in decimal format to at most 3 decimal places
+          in: path
+          required: true
+          type: number
+          format: double
+        -
+          name: lang
+          description: Optional query parameter. 2 letter ISO 3166-1 language code.
+          in: query
+          required: true
+          type: string
+      responses:
+        200:
+          description: The 5 closest airports to the given latitude and longitude, irrespective of the radius of the reference point.
+          schema: 
+            $ref: '#/definitions/NearestAirportsResponse'      
 
   /references/airports/{airportCode}:
     get:
@@ -234,7 +271,7 @@ paths:
           name: LHoperated
           description: Optional query parameter. Restrict the results to locations with flights operated by LH (true, false).
           in: query
-          required: true
+          required: false
           type: string
       responses:
         200:
@@ -566,8 +603,23 @@ definitions:
         type: string
       Position:
         $ref: '#/definitions/Position'
+      LocationType:
+        type: string
+        enum:
+          - Airport
+          - RailwayStation
+          - BusStation
       Names:
         $ref: '#/definitions/Names'
+      Distance:
+        $ref: '#/definitions/Distance'
+  NearestAirportsResponse:
+    type: object
+    required:
+      - NearestAirportResource
+    properties:
+      NearestAirportResource:
+        $ref: '#/definitions/AirportResource'
   AirlinesResponse:
     type: object
     required:
@@ -721,6 +773,17 @@ definitions:
       Longitude:
           type: number
           format: double
+  Distance:
+    type: object
+    required:
+      - Value
+      - UOM
+    properties:
+      Value:
+          type: number
+          format: double
+      UOM:
+          type: string
   Names:
     type: object
     required:
@@ -765,7 +828,7 @@ definitions:
       - Flights
     properties:
       Flights:
-        $ref: '#/definitions/SingularFlights'
+        $ref: '#/definitions/Flights'
   Flights:
     type: object
     required:
@@ -775,13 +838,6 @@ definitions:
         type: array
         items:
           $ref: '#/definitions/Flight'
-  SingularFlights:
-    type: object
-    required:
-      - Flight
-    properties:
-      Flight:
-        $ref: '#/definitions/Flight'
   Flight:
     type: object
     required:
